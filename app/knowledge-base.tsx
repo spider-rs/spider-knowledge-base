@@ -146,45 +146,93 @@ export default function KnowledgeBase() {
       <SearchBar setDataValues={setData} onSaveComplete={loadDomains} />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-56 border-r overflow-auto p-3 text-sm shrink-0">
-          <div className="flex gap-2 mb-3">
-            <Button size="sm" variant={mode === "search" ? "default" : "outline"} onClick={() => setMode("search")} className="flex-1 text-xs">Search</Button>
-            <Button size="sm" variant={mode === "crawl" ? "default" : "outline"} onClick={() => setMode("crawl")} className="flex-1 text-xs">Crawl</Button>
+        <div className="w-64 border-r overflow-auto p-4 text-sm shrink-0 flex flex-col gap-4">
+          {/* Mode Toggle */}
+          <div className="flex gap-1 p-1 bg-muted/50 rounded-lg">
+            <Button size="sm" variant={mode === "search" ? "default" : "ghost"} onClick={() => setMode("search")} className={`flex-1 text-xs h-8 rounded-md ${mode === "search" ? "bg-[#3bde77] hover:bg-[#2bc866] text-black" : ""}`}>Search</Button>
+            <Button size="sm" variant={mode === "crawl" ? "default" : "ghost"} onClick={() => setMode("crawl")} className={`flex-1 text-xs h-8 rounded-md ${mode === "crawl" ? "bg-[#3bde77] hover:bg-[#2bc866] text-black" : ""}`}>Crawl</Button>
           </div>
-          <div className="mb-4 text-xs text-muted-foreground">
-            <p>{totalPages} pages indexed</p>
-            <p>{formatBytes(totalSize)} stored</p>
-          </div>
-          <h3 className="font-bold mb-2 text-xs">Indexed Domains</h3>
-          {domains.map((d) => (
-            <div key={d.domain} className="flex items-center justify-between py-1 text-xs group">
-              <span className="truncate flex-1">{d.domain}</span>
-              <Badge variant="outline" className="text-[10px] ml-1">{d.pageCount}</Badge>
-              <button className="ml-1 text-primary/70 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" title="Download domain" onClick={() => exportDomain(d.domain)}>↓</button>
-              <button className="ml-1 text-red-400 hover:text-red-300" onClick={async () => { await clearDomain(d.domain); loadDomains(); }}>x</button>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+              <p className="text-lg font-bold">{totalPages}</p>
+              <p className="text-[10px] text-muted-foreground">Pages</p>
             </div>
-          ))}
-          {domains.length > 0 && (
-            <>
-              <div className="mt-4 pt-3 border-t">
-                <h3 className="font-bold mb-2 text-xs">Export</h3>
-                <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
-                  <SelectTrigger className="h-7 text-xs mb-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="json">JSON</SelectItem>
-                    <SelectItem value="csv">CSV</SelectItem>
-                    <SelectItem value="markdown">Markdown</SelectItem>
-                    <SelectItem value="html">HTML</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button size="sm" variant="outline" className="w-full text-xs" onClick={exportAll} disabled={exporting}>
-                  {exporting ? "Exporting..." : "Download All"}
-                </Button>
+            <div className="rounded-lg border bg-muted/30 p-2.5 text-center">
+              <p className="text-lg font-bold">{formatBytes(totalSize)}</p>
+              <p className="text-[10px] text-muted-foreground">Stored</p>
+            </div>
+          </div>
+
+          {/* Domains */}
+          <div>
+            <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-2">Indexed Domains</h3>
+            {domains.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-2">No domains indexed yet.</p>
+            ) : (
+              <div className="space-y-1">
+                {domains.map((d) => (
+                  <div key={d.domain} className="flex items-center gap-1.5 rounded-md px-2 py-1.5 hover:bg-muted/50 transition-colors group">
+                    <span className="truncate flex-1 text-xs">{d.domain}</span>
+                    <Badge variant="outline" className="text-[10px] shrink-0 tabular-nums">{d.pageCount}</Badge>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
+                      title={`Download ${d.domain}`}
+                      onClick={() => exportDomain(d.domain)}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-400"
+                      title={`Remove ${d.domain}`}
+                      onClick={async () => { await clearDomain(d.domain); loadDomains(); }}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </Button>
+                  </div>
+                ))}
               </div>
-              <Button size="sm" variant="ghost" className="w-full mt-2 text-xs text-destructive" onClick={async () => { await clearAll(); loadDomains(); setSearchResults([]); }}>Clear All</Button>
-            </>
+            )}
+          </div>
+
+          {/* Export */}
+          {domains.length > 0 && (
+            <div className="border-t pt-4 space-y-2">
+              <h3 className="font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-2">Export</h3>
+              <Select value={exportFormat} onValueChange={(v) => setExportFormat(v as ExportFormat)}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="json">JSON</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                  <SelectItem value="markdown">Markdown</SelectItem>
+                  <SelectItem value="html">HTML</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="outline" className="w-full text-xs h-8" onClick={exportAll} disabled={exporting}>
+                {exporting ? "Exporting..." : `Download All (${totalPages})`}
+              </Button>
+            </div>
+          )}
+
+          {/* Danger Zone */}
+          {domains.length > 0 && (
+            <div className="mt-auto border-t pt-4">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full text-xs h-8 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                onClick={async () => { await clearAll(); loadDomains(); setSearchResults([]); }}
+              >
+                Clear All Data
+              </Button>
+            </div>
           )}
         </div>
         {/* Main */}
